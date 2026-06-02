@@ -40,8 +40,15 @@ class TransferUseCaseTest extends TestCase
         $sender = $this->makeWallet('uuid-w-1', 'uuid-u-1', 1000);
         $receiver = $this->makeWallet('uuid-w-2', 'uuid-u-2', 500);
 
-        $this->walletRepo->shouldReceive('findById')->with('uuid-w-1')->andReturn($sender);
-        $this->walletRepo->shouldReceive('findById')->with('uuid-w-2')->andReturn($receiver);
+        // Existence checks
+        $this->walletRepo->shouldReceive('findById')->with('uuid-w-1')->once()->andReturn($sender);
+        $this->walletRepo->shouldReceive('findById')->with('uuid-w-2')->once()->andReturn($receiver);
+
+        // Locked reads inside transaction (sorted order + per-wallet reads)
+        $this->walletRepo->shouldReceive('findByIdForUpdate')->andReturnUsing(
+            fn (string $id) => $id === 'uuid-w-1' ? $sender : $receiver
+        );
+
         $this->walletRepo->shouldReceive('update')->twice();
         $this->txRepo->shouldReceive('save')->once()->andReturnUsing(
             fn ($tx) => new Transaction('uuid-tx-1', $tx->senderWalletId, $tx->receiverWalletId, $tx->amount)
@@ -61,9 +68,14 @@ class TransferUseCaseTest extends TestCase
         $sender = $this->makeWallet('uuid-w-1', 'uuid-u-1', 100);
         $receiver = $this->makeWallet('uuid-w-2', 'uuid-u-2', 0);
 
-        $this->walletRepo->shouldReceive('findById')->with('uuid-w-1')->andReturn($sender);
-        $this->walletRepo->shouldReceive('findById')->with('uuid-w-2')->andReturn($receiver);
-        DB::shouldReceive('transaction')->never();
+        $this->walletRepo->shouldReceive('findById')->with('uuid-w-1')->once()->andReturn($sender);
+        $this->walletRepo->shouldReceive('findById')->with('uuid-w-2')->once()->andReturn($receiver);
+
+        $this->walletRepo->shouldReceive('findByIdForUpdate')->andReturnUsing(
+            fn (string $id) => $id === 'uuid-w-1' ? $sender : $receiver
+        );
+
+        DB::shouldReceive('transaction')->once()->andReturnUsing(fn ($cb) => $cb());
 
         $this->useCase->execute(new TransferDTO('uuid-w-1', 'uuid-w-2', 500), 'uuid-u-1');
     }
@@ -72,7 +84,7 @@ class TransferUseCaseTest extends TestCase
     {
         $this->expectException(WalletNotFoundException::class);
 
-        $this->walletRepo->shouldReceive('findById')->with('uuid-w-99')->andReturn(null);
+        $this->walletRepo->shouldReceive('findById')->with('uuid-w-99')->once()->andReturn(null);
         $this->walletRepo->shouldReceive('findById')->with('uuid-w-2')->andReturn($this->makeWallet('uuid-w-2', 'uuid-u-2', 0));
 
         $this->useCase->execute(new TransferDTO('uuid-w-99', 'uuid-w-2', 100), 'uuid-u-1');

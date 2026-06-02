@@ -8,6 +8,9 @@ interface WalletRepositoryInterface
 {
     public function findById(string $id): ?Wallet;
 
+    /** Locks the row for update — must be called inside a DB transaction. */
+    public function findByIdForUpdate(string $id): ?Wallet;
+
     /** @return Wallet[] */
     public function findByUserId(string $userId): array;
 

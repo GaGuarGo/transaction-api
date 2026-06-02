@@ -19,24 +19,36 @@ class TransferUseCase
 
     public function execute(TransferDTO $dto, string $requestingUserId): void
     {
-        $senderWallet = $this->walletRepository->findById($dto->senderWalletId);
-        $receiverWallet = $this->walletRepository->findById($dto->receiverWalletId);
-
-        if (! $senderWallet) {
+        // Existence check before acquiring locks
+        if (! $this->walletRepository->findById($dto->senderWalletId)) {
             throw new WalletNotFoundException('Sender wallet not found');
         }
 
-        if (! $receiverWallet) {
+        if (! $this->walletRepository->findById($dto->receiverWalletId)) {
             throw new WalletNotFoundException('Receiver wallet not found');
         }
 
-        if ($senderWallet->balance < $dto->amount) {
-            throw new InsufficientBalanceException;
-        }
+        DB::transaction(function () use ($dto) {
+            // Re-read with SELECT FOR UPDATE inside the transaction to prevent
+            // concurrent transfers from reading stale balances and overwriting each other.
+            // Wallets are always locked in a consistent order (lower UUID first) to
+            // prevent deadlocks when two transfers involve the same pair of wallets.
+            $ids = [$dto->senderWalletId, $dto->receiverWalletId];
+            sort($ids);
 
-        DB::transaction(function () use ($senderWallet, $receiverWallet, $dto) {
-            $this->walletRepository->update($senderWallet->withBalance($senderWallet->balance - $dto->amount));
-            $this->walletRepository->update($receiverWallet->withBalance($receiverWallet->balance + $dto->amount));
+            [$first, $second] = $ids;
+            $this->walletRepository->findByIdForUpdate($first);
+            $this->walletRepository->findByIdForUpdate($second);
+
+            $sender = $this->walletRepository->findByIdForUpdate($dto->senderWalletId);
+            $receiver = $this->walletRepository->findByIdForUpdate($dto->receiverWalletId);
+
+            if ($sender->balance < $dto->amount) {
+                throw new InsufficientBalanceException;
+            }
+
+            $this->walletRepository->update($sender->withBalance($sender->balance - $dto->amount));
+            $this->walletRepository->update($receiver->withBalance($receiver->balance + $dto->amount));
 
             $this->transactionRepository->save(new Transaction(
                 id: null,

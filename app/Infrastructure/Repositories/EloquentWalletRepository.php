@@ -16,6 +16,13 @@ class EloquentWalletRepository implements WalletRepositoryInterface
         return $model ? $this->toEntity($model) : null;
     }
 
+    public function findByIdForUpdate(string $id): ?WalletEntity
+    {
+        $model = WalletModel::lockForUpdate()->find($id);
+
+        return $model ? $this->toEntity($model) : null;
+    }
+
     public function findByUserId(string $userId): array
     {
         return WalletModel::where('user_id', $userId)
