@@ -1,0 +1,358 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Transaction API",
+    "version": "1.0.0",
+    "description": "API REST de transações financeiras entre carteiras de usuários."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8000/api",
+      "description": "Local"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    },
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "username": { "type": "string" },
+          "email": { "type": "string", "format": "email" },
+          "birthdate": { "type": "string", "format": "date" }
+        }
+      },
+      "Wallet": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "name": { "type": "string" },
+          "balance": { "type": "integer", "description": "Saldo em centavos" }
+        }
+      },
+      "Transaction": {
+        "type": "object",
+        "properties": {
+          "type": { "type": "string", "enum": ["sent", "received"] },
+          "fromWalletId": { "type": "string", "format": "uuid" },
+          "toWalletId": { "type": "string", "format": "uuid" },
+          "amount": { "type": "integer", "description": "Valor em centavos" },
+          "date": { "type": "string", "format": "date-time" }
+        }
+      },
+      "TokenResponse": {
+        "type": "object",
+        "properties": {
+          "token": { "type": "string" },
+          "expiresIn": { "type": "string", "example": "1h" }
+        }
+      },
+      "ValidationError": {
+        "type": "object",
+        "properties": {
+          "message": { "type": "string" },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/users/signup": {
+      "post": {
+        "summary": "Cadastro de usuário",
+        "tags": ["Auth"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["username", "email", "password", "birthdate"],
+                "properties": {
+                  "username": { "type": "string", "minLength": 3, "maxLength": 50, "example": "joao" },
+                  "email": { "type": "string", "format": "email", "example": "joao@example.com" },
+                  "password": { "type": "string", "minLength": 8, "example": "Password1" },
+                  "birthdate": { "type": "string", "format": "date", "example": "2000-01-01" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Usuário criado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "string", "format": "uuid" }
+                  }
+                }
+              }
+            }
+          },
+          "422": { "description": "Dados inválidos", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ValidationError" } } } }
+        }
+      }
+    },
+    "/users/signin": {
+      "post": {
+        "summary": "Login de usuário",
+        "tags": ["Auth"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["username", "password"],
+                "properties": {
+                  "username": { "type": "string", "example": "joao" },
+                  "password": { "type": "string", "example": "Password1" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login efetuado",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TokenResponse" } } }
+          },
+          "401": { "description": "Credenciais inválidas" }
+        }
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "summary": "Renovar token",
+        "tags": ["Auth"],
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Token renovado",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TokenResponse" } } }
+          },
+          "401": { "description": "Não autenticado" }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "summary": "Logout (invalida token)",
+        "tags": ["Auth"],
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "204": { "description": "Token invalidado" },
+          "401": { "description": "Não autenticado" }
+        }
+      }
+    },
+    "/auth/validate": {
+      "post": {
+        "summary": "Validar token",
+        "tags": ["Auth"],
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Token válido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "valid": { "type": "boolean", "example": true }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Token inválido" }
+        }
+      }
+    },
+    "/users": {
+      "get": {
+        "summary": "Listar todos os usuários",
+        "tags": ["Users"],
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Lista de usuários",
+            "content": {
+              "application/json": {
+                "schema": { "type": "array", "items": { "$ref": "#/components/schemas/User" } }
+              }
+            }
+          },
+          "401": { "description": "Não autenticado" }
+        }
+      }
+    },
+    "/users/me": {
+      "put": {
+        "summary": "Atualizar dados do usuário autenticado",
+        "tags": ["Users"],
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["username", "email"],
+                "properties": {
+                  "username": { "type": "string", "minLength": 3, "maxLength": 50, "example": "joao_novo" },
+                  "email": { "type": "string", "format": "email", "example": "joao_novo@example.com" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Usuário atualizado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/User" } } } },
+          "401": { "description": "Não autenticado" },
+          "422": { "description": "Dados inválidos" }
+        }
+      },
+      "delete": {
+        "summary": "Excluir conta do usuário autenticado",
+        "tags": ["Users"],
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "204": { "description": "Conta excluída" },
+          "401": { "description": "Não autenticado" }
+        }
+      }
+    },
+    "/users/me/transactions": {
+      "get": {
+        "summary": "Histórico de transações do usuário autenticado",
+        "tags": ["Users"],
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "walletId",
+            "in": "query",
+            "required": false,
+            "description": "Filtrar por carteira específica",
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de transações",
+            "content": {
+              "application/json": {
+                "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Transaction" } }
+              }
+            }
+          },
+          "401": { "description": "Não autenticado" }
+        }
+      }
+    },
+    "/wallets": {
+      "get": {
+        "summary": "Listar carteiras do usuário autenticado",
+        "tags": ["Wallets"],
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Lista de carteiras",
+            "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Wallet" } } } }
+          },
+          "401": { "description": "Não autenticado" }
+        }
+      },
+      "post": {
+        "summary": "Criar nova carteira",
+        "tags": ["Wallets"],
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name"],
+                "properties": {
+                  "name": { "type": "string", "maxLength": 50, "example": "savings" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Carteira criada", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Wallet" } } } },
+          "401": { "description": "Não autenticado" },
+          "422": { "description": "Dados inválidos" }
+        }
+      }
+    },
+    "/wallets/{id}": {
+      "get": {
+        "summary": "Detalhes de uma carteira",
+        "tags": ["Wallets"],
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Carteira encontrada", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Wallet" } } } },
+          "401": { "description": "Não autenticado" },
+          "403": { "description": "Sem permissão para acessar esta carteira" },
+          "404": { "description": "Carteira não encontrada" }
+        }
+      }
+    },
+    "/transfer": {
+      "post": {
+        "summary": "Transferir entre carteiras",
+        "tags": ["Transactions"],
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["fromWalletId", "toWalletId", "amount"],
+                "properties": {
+                  "fromWalletId": { "type": "string", "format": "uuid", "description": "Carteira de origem (deve pertencer ao usuário autenticado)" },
+                  "toWalletId": { "type": "string", "format": "uuid", "description": "Carteira de destino" },
+                  "amount": { "type": "integer", "minimum": 1, "description": "Valor em centavos", "example": 5000 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": { "description": "Transferência realizada" },
+          "401": { "description": "Não autenticado" },
+          "403": { "description": "A carteira de origem não pertence ao usuário" },
+          "404": { "description": "Carteira não encontrada" },
+          "422": { "description": "Saldo insuficiente ou dados inválidos" }
+        }
+      }
+    }
+  }
+}
