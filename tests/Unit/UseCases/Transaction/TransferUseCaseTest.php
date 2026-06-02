@@ -11,7 +11,6 @@ use App\Domain\Transaction\Entities\Transaction;
 use App\Domain\Transaction\Repositories\TransactionRepositoryInterface;
 use App\Domain\Wallet\Entities\Wallet;
 use App\Domain\Wallet\Repositories\WalletRepositoryInterface;
-use DateTimeImmutable;
 use Illuminate\Support\Facades\DB;
 use Mockery;
 use Tests\TestCase;
