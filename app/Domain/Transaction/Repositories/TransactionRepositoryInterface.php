@@ -9,5 +9,5 @@ interface TransactionRepositoryInterface
     public function save(Transaction $transaction): Transaction;
 
     /** @return Transaction[] */
-    public function findByUserId(int $userId): array;
+    public function findByUserId(int $userId, ?int $walletId = null): array;
 }

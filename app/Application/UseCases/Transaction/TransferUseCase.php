@@ -4,44 +4,49 @@ namespace App\Application\UseCases\Transaction;
 
 use App\Application\DTOs\TransferDTO;
 use App\Application\Exceptions\InsufficientBalanceException;
-use App\Application\Exceptions\UserNotFoundException;
+use App\Application\Exceptions\UnauthorizedWalletAccessException;
+use App\Application\Exceptions\WalletNotFoundException;
 use App\Domain\Transaction\Entities\Transaction;
 use App\Domain\Transaction\Repositories\TransactionRepositoryInterface;
-use App\Domain\User\Repositories\UserRepositoryInterface;
+use App\Domain\Wallet\Repositories\WalletRepositoryInterface;
 use Illuminate\Support\Facades\DB;
 
 class TransferUseCase
 {
     public function __construct(
-        private readonly UserRepositoryInterface $userRepository,
+        private readonly WalletRepositoryInterface $walletRepository,
         private readonly TransactionRepositoryInterface $transactionRepository,
     ) {}
 
-    public function execute(TransferDTO $dto): void
+    public function execute(TransferDTO $dto, int $requestingUserId): void
     {
-        $sender = $this->userRepository->findById($dto->senderId);
-        $receiver = $this->userRepository->findById($dto->receiverId);
+        $senderWallet = $this->walletRepository->findById($dto->senderWalletId);
+        $receiverWallet = $this->walletRepository->findById($dto->receiverWalletId);
 
-        if (! $sender) {
-            throw new UserNotFoundException('Sender not found');
+        if (! $senderWallet) {
+            throw new WalletNotFoundException('Sender wallet not found');
         }
 
-        if (! $receiver) {
-            throw new UserNotFoundException('Receiver not found');
+        if (! $receiverWallet) {
+            throw new WalletNotFoundException('Receiver wallet not found');
         }
 
-        if ($sender->balance < $dto->amount) {
+        if ($senderWallet->userId !== $requestingUserId) {
+            throw new UnauthorizedWalletAccessException;
+        }
+
+        if ($senderWallet->balance < $dto->amount) {
             throw new InsufficientBalanceException;
         }
 
-        DB::transaction(function () use ($sender, $receiver, $dto) {
-            $this->userRepository->update($sender->withBalance($sender->balance - $dto->amount));
-            $this->userRepository->update($receiver->withBalance($receiver->balance + $dto->amount));
+        DB::transaction(function () use ($senderWallet, $receiverWallet, $dto) {
+            $this->walletRepository->update($senderWallet->withBalance($senderWallet->balance - $dto->amount));
+            $this->walletRepository->update($receiverWallet->withBalance($receiverWallet->balance + $dto->amount));
 
             $this->transactionRepository->save(new Transaction(
                 id: null,
-                senderId: $dto->senderId,
-                receiverId: $dto->receiverId,
+                senderWalletId: $dto->senderWalletId,
+                receiverWalletId: $dto->receiverWalletId,
                 amount: $dto->amount,
             ));
         });

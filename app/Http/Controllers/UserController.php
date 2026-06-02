@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Application\DTOs\SignUpDTO;
 use App\Application\DTOs\UpdateUserDTO;
 use App\Application\UseCases\User\DeleteUserUseCase;
-use App\Application\UseCases\User\GetBalanceUseCase;
 use App\Application\UseCases\User\ListUsersUseCase;
 use App\Application\UseCases\User\SignUpUseCase;
 use App\Application\UseCases\User\UpdateUserUseCase;
@@ -21,7 +20,6 @@ class UserController extends Controller
     public function __construct(
         private readonly SignUpUseCase $signUpUseCase,
         private readonly ListUsersUseCase $listUsersUseCase,
-        private readonly GetBalanceUseCase $getBalanceUseCase,
         private readonly UpdateUserUseCase $updateUserUseCase,
         private readonly DeleteUserUseCase $deleteUserUseCase,
     ) {}
@@ -47,13 +45,6 @@ class UserController extends Controller
         );
     }
 
-    public function balance(Request $request): JsonResponse
-    {
-        $balance = $this->getBalanceUseCase->execute($request->user()->id);
-
-        return response()->json(['balance' => $balance]);
-    }
-
     public function update(UpdateUserRequest $request): JsonResponse
     {
         $user = $this->updateUserUseCase->execute(new UpdateUserDTO(
@@ -68,7 +59,6 @@ class UserController extends Controller
     public function destroy(Request $request): Response
     {
         $request->user()->tokens()->delete();
-
         $this->deleteUserUseCase->execute($request->user()->id);
 
         return response()->noContent();

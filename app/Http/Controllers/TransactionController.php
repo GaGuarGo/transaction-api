@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Application\DTOs\TransferDTO;
 use App\Application\Exceptions\InsufficientBalanceException;
-use App\Application\Exceptions\UserNotFoundException;
+use App\Application\Exceptions\UnauthorizedWalletAccessException;
+use App\Application\Exceptions\WalletNotFoundException;
 use App\Application\UseCases\Transaction\GetTransactionHistoryUseCase;
 use App\Application\UseCases\Transaction\TransferUseCase;
+use App\Domain\Wallet\Repositories\WalletRepositoryInterface;
 use App\Http\Requests\TransferRequest;
 use App\Http\Resources\TransactionResource;
 use Illuminate\Http\JsonResponse;
@@ -18,21 +20,19 @@ class TransactionController extends Controller
     public function __construct(
         private readonly TransferUseCase $transferUseCase,
         private readonly GetTransactionHistoryUseCase $getTransactionHistoryUseCase,
+        private readonly WalletRepositoryInterface $walletRepository,
     ) {}
 
     public function transfer(TransferRequest $request): Response|JsonResponse
     {
-        try {
-            $this->transferUseCase->execute(new TransferDTO(
-                senderId: $request->user()->id,
-                receiverId: $request->input('toId'),
+        $this->transferUseCase->execute(
+            new TransferDTO(
+                senderWalletId: $request->input('fromWalletId'),
+                receiverWalletId: $request->input('toWalletId'),
                 amount: $request->input('amount'),
-            ));
-        } catch (InsufficientBalanceException $e) {
-            return response()->json(['message' => $e->getMessage()], 422);
-        } catch (UserNotFoundException $e) {
-            return response()->json(['message' => $e->getMessage()], 404);
-        }
+            ),
+            $request->user()->id,
+        );
 
         return response()->noContent();
     }
@@ -40,10 +40,17 @@ class TransactionController extends Controller
     public function history(Request $request): JsonResponse
     {
         $userId = $request->user()->id;
-        $transactions = $this->getTransactionHistoryUseCase->execute($userId);
+        $walletId = $request->query('walletId') ? (int) $request->query('walletId') : null;
+
+        $userWalletIds = array_map(
+            fn ($w) => $w->id,
+            $this->walletRepository->findByUserId($userId)
+        );
+
+        $transactions = $this->getTransactionHistoryUseCase->execute($userId, $walletId);
 
         $data = array_map(
-            fn ($tx) => (new TransactionResource($tx, $userId))->toArray($request),
+            fn ($tx) => (new TransactionResource($tx, $userWalletIds))->toArray($request),
             $transactions
         );
 

@@ -10,7 +10,8 @@ class TransferRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'toId' => ['required', 'integer', 'exists:users,id'],
+            'fromWalletId' => ['required', 'integer', 'exists:wallets,id'],
+            'toWalletId' => ['required', 'integer', 'exists:wallets,id'],
             'amount' => ['required', 'integer', 'min:1'],
         ];
     }
@@ -19,8 +20,8 @@ class TransferRequest extends FormRequest
     {
         return [
             function (Validator $validator) {
-                if ((int) $this->input('toId') === $this->user()->id) {
-                    $validator->errors()->add('toId', 'You cannot transfer money to yourself.');
+                if ($this->input('fromWalletId') === $this->input('toWalletId')) {
+                    $validator->errors()->add('toWalletId', 'Cannot transfer to the same wallet.');
                 }
             },
         ];

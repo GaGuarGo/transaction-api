@@ -10,8 +10,8 @@ class GetTransactionHistoryUseCase
         private readonly TransactionRepositoryInterface $transactionRepository,
     ) {}
 
-    public function execute(int $userId): array
+    public function execute(int $userId, ?int $walletId = null): array
     {
-        return $this->transactionRepository->findByUserId($userId);
+        return $this->transactionRepository->findByUserId($userId, $walletId);
     }
 }

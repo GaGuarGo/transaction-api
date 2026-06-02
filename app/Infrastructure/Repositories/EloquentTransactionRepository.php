@@ -5,6 +5,7 @@ namespace App\Infrastructure\Repositories;
 use App\Domain\Transaction\Entities\Transaction as TransactionEntity;
 use App\Domain\Transaction\Repositories\TransactionRepositoryInterface;
 use App\Models\Transaction as TransactionModel;
+use App\Models\Wallet as WalletModel;
 use DateTimeImmutable;
 
 class EloquentTransactionRepository implements TransactionRepositoryInterface
@@ -12,18 +13,25 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
     public function save(TransactionEntity $transaction): TransactionEntity
     {
         $model = TransactionModel::create([
-            'sender_id' => $transaction->senderId,
-            'receiver_id' => $transaction->receiverId,
+            'sender_wallet_id' => $transaction->senderWalletId,
+            'receiver_wallet_id' => $transaction->receiverWalletId,
             'amount' => $transaction->amount,
         ]);
 
         return $this->toEntity($model->fresh());
     }
 
-    public function findByUserId(int $userId): array
+    public function findByUserId(int $userId, ?int $walletId = null): array
     {
-        return TransactionModel::where('sender_id', $userId)
-            ->orWhere('receiver_id', $userId)
+        // Get all wallet IDs belonging to this user
+        $walletIds = $walletId !== null
+            ? [$walletId]
+            : WalletModel::where('user_id', $userId)->pluck('id')->toArray();
+
+        return TransactionModel::where(function ($q) use ($walletIds) {
+            $q->whereIn('sender_wallet_id', $walletIds)
+                ->orWhereIn('receiver_wallet_id', $walletIds);
+        })
             ->orderByDesc('created_at')
             ->get()
             ->map(fn ($model) => $this->toEntity($model))
@@ -34,8 +42,8 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
     {
         return new TransactionEntity(
             id: $model->id,
-            senderId: $model->sender_id,
-            receiverId: $model->receiver_id,
+            senderWalletId: $model->sender_wallet_id,
+            receiverWalletId: $model->receiver_wallet_id,
             amount: $model->amount,
             createdAt: new DateTimeImmutable($model->created_at->toDateTimeString()),
         );

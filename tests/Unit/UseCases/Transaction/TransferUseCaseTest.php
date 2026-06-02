@@ -4,12 +4,13 @@ namespace Tests\Unit\UseCases\Transaction;
 
 use App\Application\DTOs\TransferDTO;
 use App\Application\Exceptions\InsufficientBalanceException;
-use App\Application\Exceptions\UserNotFoundException;
+use App\Application\Exceptions\UnauthorizedWalletAccessException;
+use App\Application\Exceptions\WalletNotFoundException;
 use App\Application\UseCases\Transaction\TransferUseCase;
 use App\Domain\Transaction\Entities\Transaction;
 use App\Domain\Transaction\Repositories\TransactionRepositoryInterface;
-use App\Domain\User\Entities\User;
-use App\Domain\User\Repositories\UserRepositoryInterface;
+use App\Domain\Wallet\Entities\Wallet;
+use App\Domain\Wallet\Repositories\WalletRepositoryInterface;
 use DateTimeImmutable;
 use Illuminate\Support\Facades\DB;
 use Mockery;
@@ -17,7 +18,7 @@ use Tests\TestCase;
 
 class TransferUseCaseTest extends TestCase
 {
-    private UserRepositoryInterface $userRepo;
+    private WalletRepositoryInterface $walletRepo;
 
     private TransactionRepositoryInterface $txRepo;
 
@@ -26,29 +27,31 @@ class TransferUseCaseTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->userRepo = Mockery::mock(UserRepositoryInterface::class);
+        $this->walletRepo = Mockery::mock(WalletRepositoryInterface::class);
         $this->txRepo = Mockery::mock(TransactionRepositoryInterface::class);
-        $this->useCase = new TransferUseCase($this->userRepo, $this->txRepo);
+        $this->useCase = new TransferUseCase($this->walletRepo, $this->txRepo);
     }
 
-    private function makeUser(int $id, int $balance): User
+    private function makeWallet(int $id, int $userId, int $balance): Wallet
     {
-        return new User($id, "user{$id}", "user{$id}@example.com", 'hash', new DateTimeImmutable('2000-01-01'), $balance);
+        return new Wallet($id, $userId, 'default', $balance);
     }
 
     public function test_transfers_successfully(): void
     {
-        $sender = $this->makeUser(1, 1000);
-        $receiver = $this->makeUser(2, 500);
+        $sender = $this->makeWallet(1, 1, 1000);
+        $receiver = $this->makeWallet(2, 2, 500);
 
-        $this->userRepo->shouldReceive('findById')->with(1)->andReturn($sender);
-        $this->userRepo->shouldReceive('findById')->with(2)->andReturn($receiver);
-        $this->userRepo->shouldReceive('update')->twice();
-        $this->txRepo->shouldReceive('save')->once()->andReturnUsing(fn ($tx) => new Transaction(1, $tx->senderId, $tx->receiverId, $tx->amount));
+        $this->walletRepo->shouldReceive('findById')->with(1)->andReturn($sender);
+        $this->walletRepo->shouldReceive('findById')->with(2)->andReturn($receiver);
+        $this->walletRepo->shouldReceive('update')->twice();
+        $this->txRepo->shouldReceive('save')->once()->andReturnUsing(
+            fn ($tx) => new Transaction(1, $tx->senderWalletId, $tx->receiverWalletId, $tx->amount)
+        );
 
         DB::shouldReceive('transaction')->once()->andReturnUsing(fn ($cb) => $cb());
 
-        $this->useCase->execute(new TransferDTO(1, 2, 300));
+        $this->useCase->execute(new TransferDTO(1, 2, 300), 1);
 
         $this->assertTrue(true);
     }
@@ -57,24 +60,36 @@ class TransferUseCaseTest extends TestCase
     {
         $this->expectException(InsufficientBalanceException::class);
 
-        $sender = $this->makeUser(1, 100);
-        $receiver = $this->makeUser(2, 0);
+        $sender = $this->makeWallet(1, 1, 100);
+        $receiver = $this->makeWallet(2, 2, 0);
 
-        $this->userRepo->shouldReceive('findById')->with(1)->andReturn($sender);
-        $this->userRepo->shouldReceive('findById')->with(2)->andReturn($receiver);
-
+        $this->walletRepo->shouldReceive('findById')->with(1)->andReturn($sender);
+        $this->walletRepo->shouldReceive('findById')->with(2)->andReturn($receiver);
         DB::shouldReceive('transaction')->never();
 
-        $this->useCase->execute(new TransferDTO(1, 2, 500));
+        $this->useCase->execute(new TransferDTO(1, 2, 500), 1);
     }
 
-    public function test_throws_when_sender_not_found(): void
+    public function test_throws_when_sender_wallet_not_found(): void
     {
-        $this->expectException(UserNotFoundException::class);
+        $this->expectException(WalletNotFoundException::class);
 
-        $this->userRepo->shouldReceive('findById')->with(99)->andReturn(null);
-        $this->userRepo->shouldReceive('findById')->with(2)->andReturn($this->makeUser(2, 0));
+        $this->walletRepo->shouldReceive('findById')->with(99)->andReturn(null);
+        $this->walletRepo->shouldReceive('findById')->with(2)->andReturn($this->makeWallet(2, 2, 0));
 
-        $this->useCase->execute(new TransferDTO(99, 2, 100));
+        $this->useCase->execute(new TransferDTO(99, 2, 100), 1);
+    }
+
+    public function test_throws_when_user_does_not_own_sender_wallet(): void
+    {
+        $this->expectException(UnauthorizedWalletAccessException::class);
+
+        $sender = $this->makeWallet(1, 99, 1000); // owned by user 99
+        $receiver = $this->makeWallet(2, 2, 0);
+
+        $this->walletRepo->shouldReceive('findById')->with(1)->andReturn($sender);
+        $this->walletRepo->shouldReceive('findById')->with(2)->andReturn($receiver);
+
+        $this->useCase->execute(new TransferDTO(1, 2, 100), 1); // requesting user is 1
     }
 }

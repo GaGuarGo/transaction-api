@@ -14,7 +14,6 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->string('password');
             $table->date('birthdate');
-            $table->unsignedBigInteger('balance')->default(0); // stored in cents
             $table->timestamps();
             $table->softDeletes();
         });

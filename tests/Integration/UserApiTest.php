@@ -18,8 +18,7 @@ class UserApiTest extends TestCase
             'birthdate' => '2000-01-01',
         ], $overrides);
 
-        $response = $this->postJson('/api/users/signup', $data);
-        $response->assertStatus(201);
+        $this->postJson('/api/users/signup', $data)->assertStatus(201);
 
         return $data;
     }
@@ -36,7 +35,7 @@ class UserApiTest extends TestCase
         return $response->json('token');
     }
 
-    public function test_signup_creates_user(): void
+    public function test_signup_creates_user_and_default_wallet(): void
     {
         $response = $this->postJson('/api/users/signup', [
             'username' => 'joao',
@@ -47,42 +46,49 @@ class UserApiTest extends TestCase
 
         $response->assertStatus(201)->assertJsonStructure(['id']);
         $this->assertDatabaseHas('users', ['username' => 'joao']);
+        $this->assertDatabaseHas('wallets', ['name' => 'default']);
     }
 
     public function test_signup_fails_with_duplicate_username(): void
     {
         $this->signup();
 
-        $response = $this->postJson('/api/users/signup', [
+        $this->postJson('/api/users/signup', [
             'username' => 'joao',
             'email' => 'outro@example.com',
             'password' => 'Password1',
             'birthdate' => '2000-01-01',
-        ]);
+        ])->assertStatus(422);
+    }
 
-        $response->assertStatus(422);
+    public function test_signup_fails_with_weak_password(): void
+    {
+        $this->postJson('/api/users/signup', [
+            'username' => 'joao',
+            'email' => 'joao@example.com',
+            'password' => '123456',
+            'birthdate' => '2000-01-01',
+        ])->assertStatus(422);
     }
 
     public function test_signin_returns_token(): void
     {
         $this->signup();
-        $response = $this->postJson('/api/users/signin', [
+
+        $this->postJson('/api/users/signin', [
             'username' => 'joao',
             'password' => 'Password1',
-        ]);
-
-        $response->assertStatus(200)->assertJsonStructure(['token', 'expiresIn']);
+        ])->assertStatus(200)->assertJsonStructure(['token', 'expiresIn']);
     }
 
     public function test_signin_fails_with_wrong_password(): void
     {
         $this->signup();
-        $response = $this->postJson('/api/users/signin', [
+
+        $this->postJson('/api/users/signin', [
             'username' => 'joao',
             'password' => 'wrong',
-        ]);
-
-        $response->assertStatus(401);
+        ])->assertStatus(401);
     }
 
     public function test_list_users_requires_auth(): void
@@ -95,19 +101,9 @@ class UserApiTest extends TestCase
         $this->signup();
         $token = $this->signin();
 
-        $response = $this->withToken($token)->getJson('/api/users');
-
-        $response->assertStatus(200)->assertJsonStructure([['id', 'username', 'birthdate', 'balance']]);
-    }
-
-    public function test_get_balance_returns_zero_for_new_user(): void
-    {
-        $this->signup();
-        $token = $this->signin();
-
-        $response = $this->withToken($token)->getJson('/api/users/me/balance');
-
-        $response->assertStatus(200)->assertJson(['balance' => 0]);
+        $this->withToken($token)->getJson('/api/users')
+            ->assertStatus(200)
+            ->assertJsonStructure([['id', 'username', 'birthdate']]);
     }
 
     public function test_update_user(): void
@@ -115,12 +111,11 @@ class UserApiTest extends TestCase
         $this->signup();
         $token = $this->signin();
 
-        $response = $this->withToken($token)->putJson('/api/users/me', [
+        $this->withToken($token)->putJson('/api/users/me', [
             'username' => 'joaonovo',
             'email' => 'joaonovo@example.com',
-        ]);
+        ])->assertStatus(200)->assertJsonFragment(['username' => 'joaonovo']);
 
-        $response->assertStatus(200)->assertJsonFragment(['username' => 'joaonovo']);
         $this->assertDatabaseHas('users', ['username' => 'joaonovo']);
     }
 
@@ -139,7 +134,6 @@ class UserApiTest extends TestCase
         $token = $this->signin();
 
         $response = $this->withToken($token)->postJson('/api/auth/refresh');
-
         $response->assertStatus(200)->assertJsonStructure(['token', 'expiresIn']);
         $this->assertNotEquals($token, $response->json('token'));
     }

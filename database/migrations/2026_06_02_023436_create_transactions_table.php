@@ -10,8 +10,8 @@ return new class extends Migration
     {
         Schema::create('transactions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('sender_id')->constrained('users')->restrictOnDelete();
-            $table->foreignId('receiver_id')->constrained('users')->restrictOnDelete();
+            $table->foreignId('sender_wallet_id')->constrained('wallets')->restrictOnDelete();
+            $table->foreignId('receiver_wallet_id')->constrained('wallets')->restrictOnDelete();
             $table->unsignedBigInteger('amount'); // stored in cents
             $table->timestamp('created_at')->useCurrent();
         });
