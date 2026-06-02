@@ -7,7 +7,10 @@
       "Bash(sed -i '' 's/public function execute\\(int \\\\$userId\\): void/public function execute\\(string $userId\\): void/' '/Users/gabrielgomes/Documents/laravel projects/backend-omni-test/app/Application/UseCases/User/DeleteUserUseCase.php')",
       "Bash(sed -i '' 's/public function execute\\(int \\\\$userId, ?int \\\\$walletId = null\\): array/public function execute\\(string $userId, ?string $walletId = null\\): array/' '/Users/gabrielgomes/Documents/laravel projects/backend-omni-test/app/Application/UseCases/Transaction/GetTransactionHistoryUseCase.php')",
       "Bash(sed -i '' 's/public function execute\\(int \\\\$walletId, int \\\\$requestingUserId\\): Wallet/public function execute\\(string $walletId, string $requestingUserId\\): Wallet/' '/Users/gabrielgomes/Documents/laravel projects/backend-omni-test/app/Application/UseCases/Wallet/GetWalletUseCase.php')",
-      "Bash(sed -i '' 's/public function execute\\(int \\\\$userId\\): array/public function execute\\(string $userId\\): array/' '/Users/gabrielgomes/Documents/laravel projects/backend-omni-test/app/Application/UseCases/Wallet/ListUserWalletsUseCase.php')"
+      "Bash(sed -i '' 's/public function execute\\(int \\\\$userId\\): array/public function execute\\(string $userId\\): array/' '/Users/gabrielgomes/Documents/laravel projects/backend-omni-test/app/Application/UseCases/Wallet/ListUserWalletsUseCase.php')",
+      "Bash(cat \"/Users/gabrielgomes/Documents/laravel projects/backend-omni-test/app/Providers/AppServiceProvider.php\")",
+      "Bash(cat \"/Users/gabrielgomes/Documents/laravel projects/backend-omni-test/phpunit.xml\")",
+      "Bash(cat \"/Users/gabrielgomes/Documents/laravel projects/backend-omni-test/instructions.md\")"
     ]
   }
 }
