@@ -13,7 +13,7 @@ class GetWalletUseCase
         private readonly WalletRepositoryInterface $walletRepository,
     ) {}
 
-    public function execute(int $walletId, int $requestingUserId): Wallet
+    public function execute(string $walletId, string $requestingUserId): Wallet
     {
         $wallet = $this->walletRepository->findById($walletId);
 

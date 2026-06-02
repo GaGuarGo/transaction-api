@@ -10,8 +10,8 @@ class TransferRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'fromWalletId' => ['required', 'integer', 'exists:wallets,id'],
-            'toWalletId' => ['required', 'integer', 'exists:wallets,id'],
+            'fromWalletId' => ['required', 'uuid', 'exists:wallets,id'],
+            'toWalletId' => ['required', 'uuid', 'exists:wallets,id'],
             'amount' => ['required', 'integer', 'min:1'],
         ];
     }

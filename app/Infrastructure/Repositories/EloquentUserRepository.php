@@ -9,7 +9,7 @@ use DateTimeImmutable;
 
 class EloquentUserRepository implements UserRepositoryInterface
 {
-    public function findById(int $id): ?UserEntity
+    public function findById(string $id): ?UserEntity
     {
         $model = UserModel::find($id);
 
@@ -57,7 +57,7 @@ class EloquentUserRepository implements UserRepositoryInterface
         return $this->toEntity($model->fresh());
     }
 
-    public function delete(int $id): void
+    public function delete(string $id): void
     {
         UserModel::findOrFail($id)->delete();
     }

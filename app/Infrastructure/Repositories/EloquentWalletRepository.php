@@ -9,14 +9,14 @@ use DateTimeImmutable;
 
 class EloquentWalletRepository implements WalletRepositoryInterface
 {
-    public function findById(int $id): ?WalletEntity
+    public function findById(string $id): ?WalletEntity
     {
         $model = WalletModel::find($id);
 
         return $model ? $this->toEntity($model) : null;
     }
 
-    public function findByUserId(int $userId): array
+    public function findByUserId(string $userId): array
     {
         return WalletModel::where('user_id', $userId)
             ->get()

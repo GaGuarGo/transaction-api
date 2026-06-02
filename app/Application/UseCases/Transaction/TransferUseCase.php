@@ -18,7 +18,7 @@ class TransferUseCase
         private readonly TransactionRepositoryInterface $transactionRepository,
     ) {}
 
-    public function execute(TransferDTO $dto, int $requestingUserId): void
+    public function execute(TransferDTO $dto, string $requestingUserId): void
     {
         $senderWallet = $this->walletRepository->findById($dto->senderWalletId);
         $receiverWallet = $this->walletRepository->findById($dto->receiverWalletId);

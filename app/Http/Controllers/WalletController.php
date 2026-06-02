@@ -38,7 +38,7 @@ class WalletController extends Controller
         return response()->json((new WalletResource($wallet))->toArray($request), 201);
     }
 
-    public function show(Request $request, int $id): JsonResponse
+    public function show(Request $request, string $id): JsonResponse
     {
         $wallet = $this->getWalletUseCase->execute($id, $request->user()->id);
 
