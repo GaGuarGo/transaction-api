@@ -42,17 +42,17 @@ class SignUpUseCaseTest extends TestCase
 
         $this->userRepository->shouldReceive('findByUsername')->with('joao')->andReturn(null);
         $this->userRepository->shouldReceive('save')->once()->andReturnUsing(
-            fn (User $u) => new User(1, $u->username, $u->email, $u->password, $u->birthdate)
+            fn (User $u) => new User('uuid-user-1', $u->username, $u->email, $u->password, $u->birthdate)
         );
         $this->walletRepository->shouldReceive('save')->once()->andReturnUsing(
-            fn (Wallet $w) => new Wallet(1, $w->userId, $w->name, 0)
+            fn (Wallet $w) => new Wallet('uuid-wallet-1', $w->userId, $w->name, 0)
         );
 
         DB::shouldReceive('transaction')->once()->andReturnUsing(fn ($cb) => $cb());
 
         $user = $this->useCase->execute($dto);
 
-        $this->assertEquals(1, $user->id);
+        $this->assertEquals('uuid-user-1', $user->id);
         $this->assertEquals('joao', $user->username);
     }
 
@@ -60,7 +60,7 @@ class SignUpUseCaseTest extends TestCase
     {
         $this->expectException(UsernameAlreadyTakenException::class);
 
-        $existing = new User(1, 'joao', 'joao@example.com', 'hash', new DateTimeImmutable('2000-01-01'));
+        $existing = new User('uuid-user-1', 'joao', 'joao@example.com', 'hash', new DateTimeImmutable('2000-01-01'));
         $this->userRepository->shouldReceive('findByUsername')->with('joao')->andReturn($existing);
 
         $this->useCase->execute(new SignUpDTO('joao', 'outro@example.com', 'Password1', '2000-01-01'));

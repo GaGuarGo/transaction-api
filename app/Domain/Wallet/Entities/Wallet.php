@@ -7,8 +7,8 @@ use DateTimeImmutable;
 class Wallet
 {
     public function __construct(
-        public readonly ?int $id,
-        public readonly int $userId,
+        public readonly ?string $id,
+        public readonly string $userId,
         public readonly string $name,
         public readonly int $balance, // in cents
         public readonly ?DateTimeImmutable $createdAt = null,

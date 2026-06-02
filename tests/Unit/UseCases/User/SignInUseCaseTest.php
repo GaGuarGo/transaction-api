@@ -27,21 +27,21 @@ class SignInUseCaseTest extends TestCase
 
     public function test_returns_user_on_valid_credentials(): void
     {
-        $hashed = Hash::make('123456');
-        $existing = new User(1, 'joao', 'joao@example.com', $hashed, new DateTimeImmutable('2000-01-01'));
+        $hashed = Hash::make('Password1');
+        $existing = new User('uuid-user-1', 'joao', 'joao@example.com', $hashed, new DateTimeImmutable('2000-01-01'));
 
         $this->repository->shouldReceive('findByUsername')->with('joao')->andReturn($existing);
 
-        $user = $this->useCase->execute(new SignInDTO('joao', '123456'));
+        $user = $this->useCase->execute(new SignInDTO('joao', 'Password1'));
 
-        $this->assertEquals(1, $user->id);
+        $this->assertEquals('uuid-user-1', $user->id);
     }
 
     public function test_throws_on_wrong_password(): void
     {
         $this->expectException(InvalidCredentialsException::class);
 
-        $existing = new User(1, 'joao', 'joao@example.com', Hash::make('correct'), new DateTimeImmutable('2000-01-01'));
+        $existing = new User('uuid-user-1', 'joao', 'joao@example.com', Hash::make('correct'), new DateTimeImmutable('2000-01-01'));
         $this->repository->shouldReceive('findByUsername')->with('joao')->andReturn($existing);
 
         $this->useCase->execute(new SignInDTO('joao', 'wrong'));
@@ -53,6 +53,6 @@ class SignInUseCaseTest extends TestCase
 
         $this->repository->shouldReceive('findByUsername')->with('ghost')->andReturn(null);
 
-        $this->useCase->execute(new SignInDTO('ghost', '123456'));
+        $this->useCase->execute(new SignInDTO('ghost', 'Password1'));
     }
 }

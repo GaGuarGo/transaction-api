@@ -6,10 +6,10 @@ use App\Domain\Wallet\Entities\Wallet;
 
 interface WalletRepositoryInterface
 {
-    public function findById(int $id): ?Wallet;
+    public function findById(string $id): ?Wallet;
 
     /** @return Wallet[] */
-    public function findByUserId(int $userId): array;
+    public function findByUserId(string $userId): array;
 
     public function save(Wallet $wallet): Wallet;
 

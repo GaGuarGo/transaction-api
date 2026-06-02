@@ -37,7 +37,7 @@ class TransactionController extends Controller
     public function history(Request $request): JsonResponse
     {
         $userId = $request->user()->id;
-        $walletId = $request->query('walletId') ? (int) $request->query('walletId') : null;
+        $walletId = $request->query('walletId') ?: null;
 
         $userWalletIds = array_map(
             fn ($w) => $w->id,

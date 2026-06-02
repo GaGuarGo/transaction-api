@@ -21,9 +21,8 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
         return $this->toEntity($model->fresh());
     }
 
-    public function findByUserId(int $userId, ?int $walletId = null): array
+    public function findByUserId(string $userId, ?string $walletId = null): array
     {
-        // Get all wallet IDs belonging to this user
         $walletIds = $walletId !== null
             ? [$walletId]
             : WalletModel::where('user_id', $userId)->pluck('id')->toArray();

@@ -10,7 +10,7 @@ class ListUserWalletsUseCase
         private readonly WalletRepositoryInterface $walletRepository,
     ) {}
 
-    public function execute(int $userId): array
+    public function execute(string $userId): array
     {
         return $this->walletRepository->findByUserId($userId);
     }

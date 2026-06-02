@@ -1,7 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "Bash(php artisan *)"
+      "Bash(php artisan *)",
+      "Bash(grep -n '$id' '/Users/gabrielgomes/Documents/laravel projects/backend-omni-test/app/Http/Controllers/WalletController.php')",
+      "Bash(grep -rn \"int \\\\$\" \"/Users/gabrielgomes/Documents/laravel projects/backend-omni-test/app/Application/UseCases/\")",
+      "Bash(sed -i '' 's/public function execute\\(int \\\\$userId\\): void/public function execute\\(string $userId\\): void/' '/Users/gabrielgomes/Documents/laravel projects/backend-omni-test/app/Application/UseCases/User/DeleteUserUseCase.php')",
+      "Bash(sed -i '' 's/public function execute\\(int \\\\$userId, ?int \\\\$walletId = null\\): array/public function execute\\(string $userId, ?string $walletId = null\\): array/' '/Users/gabrielgomes/Documents/laravel projects/backend-omni-test/app/Application/UseCases/Transaction/GetTransactionHistoryUseCase.php')",
+      "Bash(sed -i '' 's/public function execute\\(int \\\\$walletId, int \\\\$requestingUserId\\): Wallet/public function execute\\(string $walletId, string $requestingUserId\\): Wallet/' '/Users/gabrielgomes/Documents/laravel projects/backend-omni-test/app/Application/UseCases/Wallet/GetWalletUseCase.php')",
+      "Bash(sed -i '' 's/public function execute\\(int \\\\$userId\\): array/public function execute\\(string $userId\\): array/' '/Users/gabrielgomes/Documents/laravel projects/backend-omni-test/app/Application/UseCases/Wallet/ListUserWalletsUseCase.php')"
     ]
   }
 }

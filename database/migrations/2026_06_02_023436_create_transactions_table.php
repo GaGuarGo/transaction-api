@@ -9,9 +9,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('transactions', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('sender_wallet_id')->constrained('wallets')->restrictOnDelete();
-            $table->foreignId('receiver_wallet_id')->constrained('wallets')->restrictOnDelete();
+            $table->uuid('id')->primary();
+            $table->foreignUuid('sender_wallet_id')->constrained('wallets')->restrictOnDelete();
+            $table->foreignUuid('receiver_wallet_id')->constrained('wallets')->restrictOnDelete();
             $table->unsignedBigInteger('amount'); // stored in cents
             $table->timestamp('created_at')->useCurrent();
         });

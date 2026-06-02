@@ -7,9 +7,9 @@ use DateTimeImmutable;
 class Transaction
 {
     public function __construct(
-        public readonly ?int $id,
-        public readonly int $senderWalletId,
-        public readonly int $receiverWalletId,
+        public readonly ?string $id,
+        public readonly string $senderWalletId,
+        public readonly string $receiverWalletId,
         public readonly int $amount, // in cents
         public readonly ?DateTimeImmutable $createdAt = null,
     ) {}

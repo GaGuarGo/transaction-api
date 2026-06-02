@@ -11,7 +11,7 @@ class DeleteUserUseCase
         private readonly UserRepositoryInterface $userRepository,
     ) {}
 
-    public function execute(int $userId): void
+    public function execute(string $userId): void
     {
         $user = $this->userRepository->findById($userId);
 

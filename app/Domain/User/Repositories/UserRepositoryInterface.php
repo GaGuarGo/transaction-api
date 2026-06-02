@@ -6,7 +6,7 @@ use App\Domain\User\Entities\User;
 
 interface UserRepositoryInterface
 {
-    public function findById(int $id): ?User;
+    public function findById(string $id): ?User;
 
     public function findByUsername(string $username): ?User;
 
@@ -19,5 +19,5 @@ interface UserRepositoryInterface
 
     public function update(User $user): User;
 
-    public function delete(int $id): void;
+    public function delete(string $id): void;
 }
