@@ -3,6 +3,7 @@
 namespace Tests\Integration;
 
 use App\Models\User;
+use App\Models\Wallet;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -20,7 +21,7 @@ class TransactionApiTest extends TestCase
         ])->assertStatus(201);
 
         if ($balance > 0) {
-            \App\Models\Wallet::whereHas('user', fn ($q) => $q->where('username', $username))
+            Wallet::whereHas('user', fn ($q) => $q->where('username', $username))
                 ->update(['balance' => $balance]);
         }
 
@@ -30,7 +31,7 @@ class TransactionApiTest extends TestCase
         ]);
 
         $userId = User::where('username', $username)->value('id');
-        $walletId = \App\Models\Wallet::where('user_id', $userId)->value('id');
+        $walletId = Wallet::where('user_id', $userId)->value('id');
 
         return [
             'token' => $response->json('token'),

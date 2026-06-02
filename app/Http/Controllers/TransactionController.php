@@ -3,9 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Application\DTOs\TransferDTO;
-use App\Application\Exceptions\InsufficientBalanceException;
-use App\Application\Exceptions\UnauthorizedWalletAccessException;
-use App\Application\Exceptions\WalletNotFoundException;
 use App\Application\UseCases\Transaction\GetTransactionHistoryUseCase;
 use App\Application\UseCases\Transaction\TransferUseCase;
 use App\Domain\Wallet\Repositories\WalletRepositoryInterface;
