@@ -8,6 +8,7 @@ use App\Application\UseCases\Transaction\TransferUseCase;
 use App\Domain\Wallet\Repositories\WalletRepositoryInterface;
 use App\Http\Requests\TransferRequest;
 use App\Http\Resources\TransactionResource;
+use App\Models\Wallet;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -22,6 +23,10 @@ class TransactionController extends Controller
 
     public function transfer(TransferRequest $request): Response|JsonResponse
     {
+        $senderWallet = Wallet::findOrFail($request->input('fromWalletId'));
+
+        $this->authorize('transfer', $senderWallet);
+
         $this->transferUseCase->execute(
             new TransferDTO(
                 senderWalletId: $request->input('fromWalletId'),

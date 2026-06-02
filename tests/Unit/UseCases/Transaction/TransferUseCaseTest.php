@@ -4,7 +4,6 @@ namespace Tests\Unit\UseCases\Transaction;
 
 use App\Application\DTOs\TransferDTO;
 use App\Application\Exceptions\InsufficientBalanceException;
-use App\Application\Exceptions\UnauthorizedWalletAccessException;
 use App\Application\Exceptions\WalletNotFoundException;
 use App\Application\UseCases\Transaction\TransferUseCase;
 use App\Domain\Transaction\Entities\Transaction;
@@ -77,18 +76,5 @@ class TransferUseCaseTest extends TestCase
         $this->walletRepo->shouldReceive('findById')->with('uuid-w-2')->andReturn($this->makeWallet('uuid-w-2', 'uuid-u-2', 0));
 
         $this->useCase->execute(new TransferDTO('uuid-w-99', 'uuid-w-2', 100), 'uuid-u-1');
-    }
-
-    public function test_throws_when_user_does_not_own_sender_wallet(): void
-    {
-        $this->expectException(UnauthorizedWalletAccessException::class);
-
-        $sender = $this->makeWallet('uuid-w-1', 'uuid-u-99', 1000); // owned by uuid-u-99
-        $receiver = $this->makeWallet('uuid-w-2', 'uuid-u-2', 0);
-
-        $this->walletRepo->shouldReceive('findById')->with('uuid-w-1')->andReturn($sender);
-        $this->walletRepo->shouldReceive('findById')->with('uuid-w-2')->andReturn($receiver);
-
-        $this->useCase->execute(new TransferDTO('uuid-w-1', 'uuid-w-2', 100), 'uuid-u-1');
     }
 }

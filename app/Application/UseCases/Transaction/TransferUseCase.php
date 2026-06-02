@@ -4,7 +4,6 @@ namespace App\Application\UseCases\Transaction;
 
 use App\Application\DTOs\TransferDTO;
 use App\Application\Exceptions\InsufficientBalanceException;
-use App\Application\Exceptions\UnauthorizedWalletAccessException;
 use App\Application\Exceptions\WalletNotFoundException;
 use App\Domain\Transaction\Entities\Transaction;
 use App\Domain\Transaction\Repositories\TransactionRepositoryInterface;
@@ -29,10 +28,6 @@ class TransferUseCase
 
         if (! $receiverWallet) {
             throw new WalletNotFoundException('Receiver wallet not found');
-        }
-
-        if ($senderWallet->userId !== $requestingUserId) {
-            throw new UnauthorizedWalletAccessException;
         }
 
         if ($senderWallet->balance < $dto->amount) {

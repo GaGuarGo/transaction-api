@@ -8,6 +8,7 @@ use App\Application\UseCases\Wallet\GetWalletUseCase;
 use App\Application\UseCases\Wallet\ListUserWalletsUseCase;
 use App\Http\Requests\CreateWalletRequest;
 use App\Http\Resources\WalletResource;
+use App\Models\Wallet;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -21,6 +22,8 @@ class WalletController extends Controller
 
     public function index(Request $request): JsonResponse
     {
+        $this->authorize('viewAny', Wallet::class);
+
         $wallets = $this->listUserWalletsUseCase->execute($request->user()->id);
 
         return response()->json(
@@ -30,6 +33,8 @@ class WalletController extends Controller
 
     public function store(CreateWalletRequest $request): JsonResponse
     {
+        $this->authorize('create', Wallet::class);
+
         $wallet = $this->createWalletUseCase->execute(new CreateWalletDTO(
             userId: $request->user()->id,
             name: $request->input('name'),
@@ -40,8 +45,12 @@ class WalletController extends Controller
 
     public function show(Request $request, string $id): JsonResponse
     {
-        $wallet = $this->getWalletUseCase->execute($id, $request->user()->id);
+        $wallet = Wallet::findOrFail($id);
 
-        return response()->json((new WalletResource($wallet))->toArray($request));
+        $this->authorize('view', $wallet);
+
+        $entity = $this->getWalletUseCase->execute($id, $request->user()->id);
+
+        return response()->json((new WalletResource($entity))->toArray($request));
     }
 }

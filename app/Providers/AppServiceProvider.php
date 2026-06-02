@@ -8,6 +8,9 @@ use App\Domain\Wallet\Repositories\WalletRepositoryInterface;
 use App\Infrastructure\Repositories\EloquentTransactionRepository;
 use App\Infrastructure\Repositories\EloquentUserRepository;
 use App\Infrastructure\Repositories\EloquentWalletRepository;
+use App\Models\Wallet;
+use App\Policies\WalletPolicy;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -19,5 +22,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(TransactionRepositoryInterface::class, EloquentTransactionRepository::class);
     }
 
-    public function boot(): void {}
+    public function boot(): void
+    {
+        Gate::policy(Wallet::class, WalletPolicy::class);
+    }
 }
