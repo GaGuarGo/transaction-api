@@ -2,8 +2,10 @@
 
 use App\Application\Exceptions\InsufficientBalanceException;
 use App\Application\Exceptions\InvalidCredentialsException;
+use App\Application\Exceptions\UnauthorizedWalletAccessException;
 use App\Application\Exceptions\UsernameAlreadyTakenException;
 use App\Application\Exceptions\UserNotFoundException;
+use App\Application\Exceptions\WalletNotFoundException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -45,6 +47,18 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(function (UsernameAlreadyTakenException $e, Request $request) {
             if ($request->is('api/*')) {
                 return response()->json(['message' => $e->getMessage()], 409);
+            }
+        });
+
+        $exceptions->render(function (WalletNotFoundException $e, Request $request) {
+            if ($request->is('api/*')) {
+                return response()->json(['message' => $e->getMessage()], 404);
+            }
+        });
+
+        $exceptions->render(function (UnauthorizedWalletAccessException $e, Request $request) {
+            if ($request->is('api/*')) {
+                return response()->json(['message' => $e->getMessage()], 403);
             }
         });
     })->create();

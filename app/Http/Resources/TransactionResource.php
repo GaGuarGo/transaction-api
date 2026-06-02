@@ -10,17 +10,17 @@ class TransactionResource extends JsonResource
 {
     public function __construct(
         private readonly Transaction $transaction,
-        private readonly int $currentUserId,
+        private readonly array $userWalletIds,
     ) {}
 
     public function toArray(Request $request): array
     {
-        $isSender = $this->transaction->senderId === $this->currentUserId;
+        $isSender = in_array($this->transaction->senderWalletId, $this->userWalletIds);
 
         return [
             'type' => $isSender ? 'sent' : 'received',
-            'toId' => $isSender ? $this->transaction->receiverId : null,
-            'fromId' => $isSender ? null : $this->transaction->senderId,
+            'fromWalletId' => $this->transaction->senderWalletId,
+            'toWalletId' => $this->transaction->receiverWalletId,
             'amount' => $this->transaction->amount,
             'date' => $this->transaction->createdAt?->format('c'),
         ];

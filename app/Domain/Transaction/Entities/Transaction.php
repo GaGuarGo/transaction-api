@@ -8,8 +8,8 @@ class Transaction
 {
     public function __construct(
         public readonly ?int $id,
-        public readonly int $senderId,
-        public readonly int $receiverId,
+        public readonly int $senderWalletId,
+        public readonly int $receiverWalletId,
         public readonly int $amount, // in cents
         public readonly ?DateTimeImmutable $createdAt = null,
     ) {}

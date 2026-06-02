@@ -9,12 +9,7 @@ class Transaction extends Model
 {
     public $timestamps = false;
 
-    protected $fillable = [
-        'sender_id',
-        'receiver_id',
-        'amount',
-        'created_at',
-    ];
+    protected $fillable = ['sender_wallet_id', 'receiver_wallet_id', 'amount', 'created_at'];
 
     protected function casts(): array
     {
@@ -24,13 +19,13 @@ class Transaction extends Model
         ];
     }
 
-    public function sender(): BelongsTo
+    public function senderWallet(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'sender_id');
+        return $this->belongsTo(Wallet::class, 'sender_wallet_id');
     }
 
-    public function receiver(): BelongsTo
+    public function receiverWallet(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'receiver_id');
+        return $this->belongsTo(Wallet::class, 'receiver_wallet_id');
     }
 }

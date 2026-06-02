@@ -44,7 +44,6 @@ class EloquentUserRepository implements UserRepositoryInterface
             'email' => $user->email,
             'password' => $user->password,
             'birthdate' => $user->birthdate->format('Y-m-d'),
-            'balance' => $user->balance,
         ]);
 
         return $this->toEntity($model);
@@ -53,12 +52,7 @@ class EloquentUserRepository implements UserRepositoryInterface
     public function update(UserEntity $user): UserEntity
     {
         $model = UserModel::findOrFail($user->id);
-
-        $model->update([
-            'username' => $user->username,
-            'email' => $user->email,
-            'balance' => $user->balance,
-        ]);
+        $model->update(['username' => $user->username, 'email' => $user->email]);
 
         return $this->toEntity($model->fresh());
     }
@@ -76,7 +70,6 @@ class EloquentUserRepository implements UserRepositoryInterface
             email: $model->email,
             password: $model->password,
             birthdate: new DateTimeImmutable($model->birthdate->format('Y-m-d')),
-            balance: $model->balance,
             createdAt: $model->created_at
                 ? new DateTimeImmutable($model->created_at->toDateTimeString())
                 : null,

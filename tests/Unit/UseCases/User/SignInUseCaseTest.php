@@ -28,7 +28,7 @@ class SignInUseCaseTest extends TestCase
     public function test_returns_user_on_valid_credentials(): void
     {
         $hashed = Hash::make('123456');
-        $existing = new User(1, 'joao', 'joao@example.com', $hashed, new DateTimeImmutable('2000-01-01'), 0);
+        $existing = new User(1, 'joao', 'joao@example.com', $hashed, new DateTimeImmutable('2000-01-01'));
 
         $this->repository->shouldReceive('findByUsername')->with('joao')->andReturn($existing);
 
@@ -41,7 +41,7 @@ class SignInUseCaseTest extends TestCase
     {
         $this->expectException(InvalidCredentialsException::class);
 
-        $existing = new User(1, 'joao', 'joao@example.com', Hash::make('correct'), new DateTimeImmutable('2000-01-01'), 0);
+        $existing = new User(1, 'joao', 'joao@example.com', Hash::make('correct'), new DateTimeImmutable('2000-01-01'));
         $this->repository->shouldReceive('findByUsername')->with('joao')->andReturn($existing);
 
         $this->useCase->execute(new SignInDTO('joao', 'wrong'));
